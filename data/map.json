@@ -1,0 +1,24 @@
+{
+    "classification_mapping": {
+        "id_to_label": {
+            "0": "change_temperature",
+            "1": "toggle_lights",
+            "2": "lock_door"
+        },
+        "label_to_id": {
+            "change_temperature": 0,
+            "toggle_lights": 1,
+            "lock_door": 2
+        }
+    },
+    "entity_mapping": {
+        "id_to_label": {
+            "1": "number",
+            "2": "boolean"
+        },
+        "label_to_id": {
+            "number": 1,
+            "boolean": 2
+        }
+    }
+}

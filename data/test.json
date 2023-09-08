@@ -1,0 +1,17 @@
+[
+    {
+        "text": "set the thermostat to 25 degrees",
+        "classification_label": 0,
+        "entity_label": [0, 0, 0, 0, 0, 0, 1, 0]
+    },
+    {
+        "text": "turn on the bedroom lights",
+        "classification_label": 1,
+        "entity_label": [0, 0, 0, 0, 0, 2, 0, 0]
+    },
+    {
+        "text": "unlock the main door",
+        "classification_label": 2,
+        "entity_label": [2, 0, 0, 0, 0, 0, 0, 0]
+    }
+]

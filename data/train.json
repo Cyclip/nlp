@@ -1,0 +1,17 @@
+[
+    {
+        "text": "please turn the temperature down to 20 degrees",
+        "classification_label": 0,
+        "entity_label": [0, 0, 0, 0, 0, 0, 1, 0]
+    },
+    {
+        "text": "its too bright, turn off the lights",
+        "classification_label": 1,
+        "entity_label": [0, 0, 0, 0, 0, 2, 0, 0]
+    },
+    {
+        "text": "lock the door",
+        "classification_label": 2,
+        "entity_label": [2, 0, 0, 0, 0, 0, 0, 0]
+    }
+]
