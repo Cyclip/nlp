@@ -1,6 +1,7 @@
-from typing import Tuple, List, Optional, Any
+from typing import Tuple, Optional, Any
 import json
 from constants import MAP_PATH
+from torch import Tensor
 
 class MTLMapping:
     """
@@ -80,6 +81,22 @@ class MTLMapping:
 
         return mapping_obj
     
+    def get_entities(self) -> Tensor:
+        """Get the entities.
+
+        Returns:
+            Tensor: The entities
+        """
+        return Tensor(list(self.entity_map["label_to_id"].values()))
+    
+    def get_class_labels(self) -> Tensor:
+        """Get the classification labels.
+
+        Returns:
+            Tensor: The classification labels
+        """
+        return Tensor(list(self.classification_map["label_to_id"].values()))
+    
     def _load_map(self) -> Tuple[dict, dict]:
         """Load the mapping from a JSON file.
 
@@ -104,7 +121,7 @@ class MTLMapping:
         Returns:
             str: The classification label
         """
-        return self.classification_map["id_to_label"][str(label)]
+        return self.classification_map["id_to_label"].get(str(label), "O")
 
     def get_class_idx(self, label: str) -> int:
         """Get the classification index given the label.
@@ -115,7 +132,7 @@ class MTLMapping:
         Returns:
             int: The numerical index
         """
-        return self.classification_map["label_to_id"][label]
+        return self.classification_map["label_to_id"].get(label, "O")
     
     def get_entity_label(self, label: str) -> str:
         """Get the entity label given the numerical index.
@@ -126,7 +143,7 @@ class MTLMapping:
         Returns:
             str: The entity label
         """
-        return self.entity_map["id_to_label"][str(label)]
+        return self.entity_map["id_to_label"].get(str(label), "O")
     
     def get_entity_idx(self, label: str) -> int:
         """Get the entity index given the label.
@@ -137,4 +154,4 @@ class MTLMapping:
         Returns:
             int: The numerical index
         """
-        return self.entity_map["label_to_id"][label]
+        return self.entity_map["label_to_id"].get(label, "O")

@@ -79,16 +79,17 @@ def predict(
     # Get the predicted output
     classification_output, ner_output, loss = _predict(model, input_ids, attention_mask, device)
 
-    # Get the NER span
-    ner_span = None
-    for i in range(len(ner_output[0])):
-        if ner_output[0][i] != 0:
-            ner_span = (i, i + 1)
-            break
+    # # Get the NER span
+    # ner_span = None
+    # for i in range(len(ner_output[0])):
+    #     if ner_output[0][i] != 0:
+    #         ner_span = (i, i + 1)
+    #         break
     
-    classification_output = classification_output.item()
-    ner_output = ner_output[0][i].item()
-    ner_span = ner_span
+    # classification_output = classification_output.item()
+    # ner_output = ner_output[0][i].item()
+    # ner_span = ner_span
+    ner_span = None
 
     return classification_output, ner_output, ner_span, loss
 

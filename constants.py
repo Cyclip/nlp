@@ -5,7 +5,7 @@ MAX_SEQ_LEN = 512
 
 # Training hyperparameters
 LR = 1e-3
-BATCH_SIZE = 32
+BATCH_SIZE = 1
 EPOCHS = 10
 
 # Default paths

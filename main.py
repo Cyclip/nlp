@@ -1,6 +1,5 @@
 import sys
 import argparse
-from model import MTLModel
 from constants import MAP_PATH, EPOCHS, BATCH_SIZE, LR
 
 def main() -> int:
@@ -42,6 +41,8 @@ def main() -> int:
     parser.add_argument("--lr", type=float, help="learning rate", default=LR)
 
     args = parser.parse_args()
+
+    from model import MTLModel
 
     model = MTLModel(MAP_PATH)
     
@@ -85,10 +86,10 @@ def main() -> int:
 
         # Convert the output to classification label idx, NER label idx
         classification_label = model.mapping.get_class_label(classification_output)
-        ner_label = model.mapping.get_entity_label(ner_output)
+        # ner_label = model.mapping.get_entity_label(ner_output)
 
         print("Classification label:", classification_label)
-        print("NER label:", ner_label)
+        # print("NER label:", ner_label)
         print("NER span:", ner_span)
         print("Loss:", loss)
     else:
