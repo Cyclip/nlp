@@ -100,6 +100,17 @@ class MTLModel(nn.Module):
         # self.crf = CRF(self.num_entities)
         self.crf = SingleClassCRF(self.num_entities, batch_first=True)
     
+    def cuda(self, device=None) -> None:
+        """Move the model to GPU.
+
+        Args:
+            device (Optional[int], optional): GPU device id. Defaults to None.
+        """
+        self.bert.cuda(device)
+        self.classification_head.cuda(device)
+        self.ner_projection.cuda(device)
+        self.crf.cuda(device)
+    
     def forward(
         self,
         input_ids: torch.Tensor,

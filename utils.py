@@ -1,97 +1,44 @@
 from typing import Tuple
 from model import MTLModel
 from data import MTLDataset
-from transformers import BertTokenizer
 import torch
 from torch import Tensor
 import matplotlib.pyplot as plt
 
-def _predict(
-        model: MTLModel,
-        input_ids: Tensor,
-        attention_mask: Tensor,
-        device: torch.device,
-    ) -> Tuple[Tensor, Tensor]:
-    """Predict the output given the input.
-
-    Args:
-        model (MTLModel): The multi-task learning model
-        input_ids (torch.Tensor): The tokenized input
-        attention_mask (torch.Tensor): Attention mask (used for ignoring padding)
-        device (torch.device): The device to run the model on
-
-    Returns:
-        torch.Tensor: The predicted output
-    """
-    # Move data to the specified device
-    input_ids = input_ids.to(device)
-    attention_mask = attention_mask.to(device)
-
-    # Set model to evaluation mode
-    model.eval()
-
-    # Deactivate autograd engine and move model to specified device
-    with torch.no_grad():
-        # Forward propagation
-        classification_logits, ner_logits, loss = model(input_ids.unsqueeze(0), attention_mask.unsqueeze(0))
-
-        # Get the predicted output
-        classification_output = torch.argmax(classification_logits, dim=1)
-        ner_output = torch.argmax(ner_logits, dim=2)
-
-    return classification_output, ner_output, loss
-
-
-
 def predict(
+        input_text: str,
         model: MTLModel,
-        data: str,
-        device: torch.device = torch.device("cpu"),
-    ) -> Tuple[int, int, Tuple[int, int], float]:
-    """Predict the output given the input.
-    Converts the output to classification label idx, NER label idx + span, and loss.
+        threshold: float = 0.5,
+    ) -> Tuple[int, Tensor, Tensor, Tensor]:
+    """Perform text classification and named entity recognition on the input text.
 
     Args:
-        model (MTLModel): The multi-task learning model
-        data (str): The input data
-        device (torch.device, optional): Device to run the model on. Defaults to torch.device("cpu").
-
+        input_text (str): The input text
+        model (MTLModel): The model
+        threshold (float, optional): The threshold for the NER logits. Defaults to 0.5.
+        
     Returns:
-    - classification_output (int): The predicted classification label index
-    - ner_idx (int): The predicted NER label index
-    - ner_span (Tuple[int, int]): The predicted NER span
-    - loss (float): The loss of the model
+        Tensor: The classification probabilities
+        Tensor: The NER logits
+        Tensor: The NER labels
     """
+    # Use GPU if available
+    if torch.cuda.is_available():
+        model = model.cuda()
+
     # Tokenize the input
-    tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-    tokenized_text = tokenizer.encode_plus(
-        data,
-        max_length=512,
-        padding="max_length",
-        truncation=True,
-        return_tensors="pt",
-    )
+    input_ids, attention_mask = model.tokenize(input_text)
 
-    # Get the input_ids and attention_mask
-    input_ids = tokenized_text["input_ids"].squeeze(0)
-    attention_mask = tokenized_text["attention_mask"].squeeze(0)
+    # Perform text classification
+    classification_probs = model.text_classification(input_ids, attention_mask)
 
-    # Get the predicted output
-    classification_output, ner_output, loss = _predict(model, input_ids, attention_mask, device)
+    # Perform NER
+    ner_logits = model.ner_extraction(input_ids, attention_mask)
 
-    # # Get the NER span
-    # ner_span = None
-    # for i in range(len(ner_output[0])):
-    #     if ner_output[0][i] != 0:
-    #         ner_span = (i, i + 1)
-    #         break
-    
-    # classification_output = classification_output.item()
-    # ner_output = ner_output[0][i].item()
-    # ner_span = ner_span
-    ner_span = None
+    # Decode NER logits
+    entity_labels = model.decode_ner_logits(ner_logits, attention_mask, threshold=threshold)
 
-    return classification_output, ner_output, ner_span, loss
+    return classification_probs, ner_logits, entity_labels
 
 
 def plot_training_data(

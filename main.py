@@ -1,6 +1,7 @@
 import sys
 import argparse
 from constants import MAP_PATH, EPOCHS, BATCH_SIZE, LR
+import warnings
 
 def main() -> int:
     """
@@ -40,7 +41,15 @@ def main() -> int:
     parser.add_argument("--batchSize", type=int, help="batch size", default=BATCH_SIZE)
     parser.add_argument("--lr", type=float, help="learning rate", default=LR)
 
+    parser.add_argument("--hideTfLogs", action="store_true", help="hide TensorFlow logs", default=True)
+    parser.add_argument("--threshold", type=float, help="threshold for the NER logits", default=0.5)
+
     args = parser.parse_args()
+
+    if args.hideTfLogs:
+        import os
+        os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+        warnings.filterwarnings("ignore")
 
     from model import MTLModel
 
@@ -71,27 +80,48 @@ def main() -> int:
         from utils import predict
         import torch
 
+        print(f"Loading {'model from ' + args.path if args.path else 'default model'}...")
+
         if args.path:
             model.load_state_dict(torch.load(args.path))
+        
+        print(f"Processing text: '{args.text}' with threshold {args.threshold}")
 
-        classification_output, ner_output, ner_span, loss = predict(
-            model,
+        classification_probs, ner_logits, entity_labels = predict(
             args.text,
+            model,
+            threshold=args.threshold,
         )
 
         if args.rawData:
-            print("[Raw] Classification output:", classification_output)
-            print("[Raw] NER output:", ner_output)
-            print("[Raw] NER span:", ner_span)
+            print("[RAW] Classification probabilities:", classification_probs)
+            print("[RAW] NER logits:", ner_logits)
+            print("[RAW] Entity labels:", entity_labels)
+        
+        """
+        == Classes ==
+        Temperature             0.923 |||||||||
+        Lights                  0.100 |
+        Blinds                  0.002
 
-        # Convert the output to classification label idx, NER label idx
-        classification_label = model.mapping.get_class_label(classification_output)
-        # ner_label = model.mapping.get_entity_label(ner_output)
+        == Entities ==
+        Number          70      0 - 0
+        """
+        print("== Classes ==")
+        for classification, prob in zip(model.mapping.classification_map["id_to_label"].values(), classification_probs.tolist()[0]):
+            print(f"{classification: <20}{prob:.3f} {'|' * int(prob * 10)}")
+        print()
+        print("== Entities ==")
+        # entity_labels example: [('number', (1, 1)), ('numbernumber', (3, 4))]
+        for entity, (start, end) in entity_labels:
+            name = f"{entity[:14]: <15}"
+            span = f"{start} - {end}"
+            # clip value
+            value = args.text[start:end + 1][:7]
+            print(f"{name}{value: <8}{span}")
 
-        print("Classification label:", classification_label)
-        # print("NER label:", ner_label)
-        print("NER span:", ner_span)
-        print("Loss:", loss)
+        if len(entity_labels) == 0:
+            print("No entities identified")
     else:
         print("No action specified")
         return 1
