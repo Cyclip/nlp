@@ -9,6 +9,10 @@ import constants
 
 
 class SingleClassCRF(CRF):
+    """
+    This is for the case where there is only one class, so the CRF layer is not needed.
+    Just for optimization purposes.
+    """
     def __init__(self, num_tags: int, batch_first: bool = False):
         super().__init__(num_tags, batch_first=batch_first)
 
@@ -153,6 +157,15 @@ class MTLModel(nn.Module):
         return classification_logits, ner_logits, total_loss
 
     def tokenize(self, input_text: str) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Tokenize and preprocess the input text.
+
+        Args:
+            input_text (str): The input text
+
+        Returns:
+        - input_ids (torch.Tensor): The tokenized input
+        - attention_mask (torch.Tensor): Attention mask (used for ignoring padding)
+        """
         # Tokenize and preprocess the input text
         input_dict = self.tokenizer.encode_plus(
             input_text,
@@ -169,6 +182,16 @@ class MTLModel(nn.Module):
         return input_ids, attention_mask
 
     def text_classification(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
+        """
+        Perform text classification on the input.
+
+        Args:
+            input_ids (torch.Tensor): The tokenized input
+            attention_mask (torch.Tensor): Attention mask (used for ignoring padding)
+
+        Returns:
+            torch.Tensor: The classification probabilities
+        """
         # Forward pass through the model
         classification_logits = self.classification_head(self.bert(input_ids, attention_mask=attention_mask).last_hidden_state[:, 0, :])
 
@@ -177,11 +200,18 @@ class MTLModel(nn.Module):
 
         return classification_probs
 
-    def ner_extraction(self, input_ids: torch.Tensor, attention_mask: torch.Tensor, label_probs: Optional[torch.Tensor] = None) -> List[str]:
+    def ner_extraction(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> List[str]:
+        """Extract named entities from the input.
+
+        Args:
+            input_ids (torch.Tensor): The tokenized input
+            attention_mask (torch.Tensor): Attention mask (used for ignoring padding)
+
+        Returns:
+            List[str]: The entity labels
+        """
         # Forward pass through the model for NER
         ner_logits = self.ner_projection(self.bert(input_ids, attention_mask=attention_mask).last_hidden_state)
-
-        # don't decode, just return logits
 
         return ner_logits
     
